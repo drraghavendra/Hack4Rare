@@ -5,10 +5,12 @@ Problem Statement Defined as follows
 Neurofibromatosis (NF) are genetic disorders that cause tumors to grow on nerve tissue. NF tumors may be benign or malignant. There is not a reliable way to predict if a tumor will be benign or malignant.
 
 
-Solution 
+Solution Approach
+
 Project aim of the solution is to develop an artificial intelligence model that uses genomics, imaging, clinical, and demographics data to predict if an NF tumor will be benign or malignant.
 
-#TargetAchieved 
+#TargetAchievedinPhases
+
 Product Roadmap
 
 Phase 1 - genetic analysis of benign and malignant NF tumors.
