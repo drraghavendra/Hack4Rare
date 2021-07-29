@@ -14,5 +14,7 @@ Project aim of the solution is to develop an artificial intelligence model that 
 Product Roadmap
 
 Phase 1 - genetic analysis of benign and malignant NF tumors.
+
 Phase 2 - deep learning analysis of genomic, imaging, clinical, and demographics data to predict if a tumor will be benign or malignant.
+
 Phase 3 - scale our deep learning solution as a product or service.
