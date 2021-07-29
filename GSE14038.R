@@ -62,7 +62,9 @@ library(reactome.db)
 
 
 ```{r}
-datadir <- setwd("~/Desktop/hack4rare/GSE14038_RAW")
+FULL_DIR <- "/Users/teresa/Desktop/hack4rare/GSE14038_RAW/"
+RAW_DIR <- "~/Desktop/hack4rare/GSE14038_RAW"
+datadir <- setwd(RAW_DIR)
 ```
 
 
@@ -136,7 +138,7 @@ We now have the metadata, phenodata (sample data), and experimental data (microa
 
 ```{r}
 #downloading raw data
-celFiles <- list.celfiles("~/Desktop/hack4rare/GSE14038_RAW", full.names = TRUE)
+celFiles <- list.celfiles(RAW_DIR, full.names = TRUE)
 Data <- read.celfiles(celFiles)
 ```
 ```{r}
@@ -157,7 +159,7 @@ head(celFiles)
 
 ```{r}
 #eliminate unseful text
-celFiles <- gsub("/Users/teresa/Desktop/hack4rare/GSE14038_RAW/", "", celFiles)
+celFiles <- gsub(FULL_DIR, "", celFiles)
 ```
 
 
@@ -215,14 +217,14 @@ head(my.pdata)
 Now that we have directory of CEL files and a corresponding data frame with the phenoData, we can read the CEL files into R
 
 ```{r}
-list.files("~/Desktop/hack4rare/GSE14038_RAW")
+list.files(RAW_DIR)
 ```
 
 
 ```{r}
 ##Perform affy normalization
 library(affy)
-my.affy <- ReadAffy(celfile.path = "~/Desktop/hack4rare/GSE14038_RAW", phenoData = my.pdata)
+my.affy <- ReadAffy(celfile.path = RAW_DIR, phenoData = my.pdata)
 show(my.affy)
 ```
 
