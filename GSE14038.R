@@ -322,6 +322,7 @@ my.hclust$labels <- pData(my.rma)$group
 plot(my.hclust, cex=0.75, main="Comparison of Biological Replicates", xlab="Euclidean Distance")
 ```
 
+
 ## Design of the experiment
 
 
@@ -332,20 +333,147 @@ designMat<- model.matrix(~0+group, pData(my.rma))
 colnames(designMat) <- c("neuro_whole", "neuro_cell", "schwann_cell", "mouse_whole")
 print(designMat)
 ```
+
 ## Fitting coefficients
 
 "neuro_whole", "neuro_cell", "schwann_cell", "mouse_whole"
 
 ```{r}
-cont.matrix <- makeContrasts (neurovsschawn_cell = neuro_cell-neuro_cell,
-                              neurovsmouse_whole = neuro_whole-mouse_whole,
-                              INT = (neuro_cell-neuro_cell) - (neuro_whole-mouse_whole),
+##specify the contrast of interest using the levels from the design matrix
+cont.matrix <- makeContrasts (neuroVSschawnn_cell = neuro_cell-schwann_cell,
+                              neuroVSmouse_whole = neuro_whole-mouse_whole,
+                              neurowVSschwann = neuro_whole-schwann_cell,
+                              INT = (neuro_cell-schwann_cell) - (neuro_whole-schwann_cell),
                               levels=designMat)
 print(cont.matrix)
 ```
 
 
 
+Now that we have a design matrix, we need to estimate the coefficients. For this design, we will essentially average the replicate arrays for each sample level. In addition, we will calculate standard deviations for each gene, and the average intensity for the genes across all microarrays.
 
+```{r}
+##determine the average effect (coefficient) for each treatment
+my.fit <- lmFit(my.rma, designMat)
+my.fit
+```
+
+## Obtaining lists of differentially expressed genes and performing statistical analysis
+
+The eBayes function performs the tests, and there are several parameters (arguments) that can be changed. We are going to change only the proportion of genes that we expect to be differentially expressed. 
+```{r}
+#linear model fit
+fit.main<-contrasts.fit(my.fit, cont.matrix)
+names(fit.main)
+```
+
+
+```{r}
+fit.Bayes<-eBayes(fit.main, proportion=0.1, trend=FALSE, robust=FALSE)
+```
+
+
+The `limma` package implements function `topTable` which contains, for a given contrast a list of genes ordered from smallest to biggest p--value which can be considered to be most to least differential expressed. For each gene the following statistics are provided:
+
+- `logFC`: Mean difference between groups.  
+-  `AveExpr`: Average expression of all genes in the comparison.
+-  `t` : Moderated t-statistic (t-test-like statistic for the comparison).
+-  `P.Value`: Test p--value.  
+-  `adj.P.Val`: Adjusted p--value      
+-  `B`: B-statistic: Posterior log odds of the gene of being vs non being differential expressed.
+topTable will adjust the p-values and return the top genes that meet the cutoffs.
+
+ ```{r}
+#first comparison
+topTab_neuroVSschawnn_cell <- topTable (fit.Bayes, number=nrow(fit.Bayes), coef="neuroVSschawnn_cell", adjust="fdr") 
+head(topTab_neuroVSschawnn_cell)
+```
+
+```{r}
+#second comparison
+topTab_neurowVSschwann <- topTable (fit.Bayes, number=nrow(fit.Bayes), coef="neurowVSschwann", adjust="fdr") 
+head(topTab_neurowVSschwann)
+```
+
+```{r}
+#third comparison
+topTab_neuroVSmouse_whole <- topTable (fit.Bayes, number=nrow(fit.Bayes), coef="neuroVSmouse_whole", adjust="fdr") 
+head(topTab_neuroVSmouse_whole)
+```
+
+```{r}
+#third comparison: Genes that behave differently between comparison 1 and 2
+topTab_INT <- topTable(fit.Bayes, number=nrow(fit.Bayes), coef="INT", adjust="fdr") 
+head(topTab_INT)
+```
+
+
+Finally, decideTests will make calls for DEGs by adjusting the p-values and applying a logFC cutoff similar to topTable.
+
+```{r}
+contrast.tests <- decideTests(fit.Bayes, method="separate", adjust.method="BH", p.value=0.05, lfc=0)
+head(contrast.tests)
+```
+                                
+                                
+                                
+## Assessing the Results
+There are several ways to visualize the statistical results from the DGE analysis. Limma has a volcanoplot function.
+
+
+```{r}
+volcanoplot(fit.Bayes, coef=1, highlight=4, 
+            main=paste("Differentially expressed genes", colnames(cont.matrix)[1], sep="\n"))
+  abline(v=c(-1,1))
+```
+
+```{r}
+volcanoplot(fit.Bayes, coef=2, highlight=4, 
+            main=paste("Differentially expressed genes", colnames(cont.matrix)[2], sep="\n"))
+  abline(v=c(-1,1))
+```
+
+```{r}
+volcanoplot(fit.Bayes, coef=3, highlight=4, 
+            main=paste("Differentially expressed genes", colnames(cont.matrix)[3], sep="\n"))
+  abline(v=c(-1,1))
+```
+
+```{r}
+volcanoplot(fit.Bayes, coef=4, highlight=4, 
+            main=paste("Differentially expressed genes", colnames(cont.matrix)[4], sep="\n"))
+  abline(v=c(-1,1))
+```
+                                
+## Biological significance
+
+```{r}
+library (hgu133plus2.db)
+columns(hgu133plus2.db)
+```
+
+```{r}
+gene.data1 <- select(hgu133plus2.db, keys=rownames(topTab_neuroVSschawnn_cell), keytype="PROBEID", columns=c("ENTREZID", "GENENAME", "SYMBOL"))
+head(gene.data1)
+```
+
+```{r}
+gene.data2 <- select(hgu133plus2.db, keys=rownames(topTab_neurowVSschwann), keytype="PROBEID", columns=c("ENTREZID", "GENENAME", "SYMBOL"))
+head(gene.data2)
+```
+
+```{r}
+gene.data3 <- select(hgu133plus2.db, keys=rownames(topTab_neuroVSmouse_whole), keytype="PROBEID", columns=c("ENTREZID", "GENENAME", "SYMBOL"))
+head(gene.data3)
+```
+
+
+```{r}
+gene.data4 <- select(hgu133plus2.db, keys=rownames(topTab_INT), keytype="PROBEID", columns=c("ENTREZID", "GENENAME", "SYMBOL"))
+head(gene.data4)
+```
+
+                                
+                                
 
 
